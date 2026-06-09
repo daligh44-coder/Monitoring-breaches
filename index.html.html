@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>نظام رصد الإخلالات - الدبلوم العام</title>
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --panel-bg: #1e1e1e;
+            --accent: #9b111e;
+            --text-light: #e0e0e0;
+            --input-bg: #2c2c2c;
+        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-dark); color: var(--text-light); padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: var(--panel-bg); padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; }
+        h2 { text-align: center; color: var(--accent); margin-bottom: 30px; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+        label { display: block; margin: 15px 0 8px; font-weight: bold; color: #bbb; }
+        input, textarea { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #444; background: var(--input-bg); color: white; box-sizing: border-box; }
+        .priority-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        .p-btn { flex: 1; padding: 10px; border: 1px solid var(--accent); border-radius: 6px; cursor: pointer; color: white; background: transparent; font-weight: bold; }
+        .p-btn.active { background: var(--accent); }
+        .dropdown { position: relative; margin-bottom: 20px; }
+        .drop-btn { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; text-align: right; font-weight: bold; }
+        .dropdown-content { display: none; background: #252525; border-radius: 0 0 6px 6px; border: 1px solid #444; max-height: 250px; overflow-y: auto; }
+        .dropdown-content label { padding: 12px; display: block; border-bottom: 1px solid #333; cursor: pointer; }
+        .dropdown-content label:hover { background: #333; }
+        .close-btn { width: 100%; padding: 10px; background: #333; border: none; color: white; cursor: pointer; font-weight: bold; }
+        .submit-btn { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 18px; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+        .submit-btn:hover { background: #7a0d16; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>مركز رصد الإخلالات</h2>
+    <form id="reportForm">
+        <label>اسم المركز:</label>
+        <input type="text" id="centerName" placeholder="أدخل اسم المركز..." required>
+
+        <label>مستوى الأولوية:</label>
+        <div class="priority-group">
+            <button type="button" class="p-btn" onclick="setPriority('عاجل جداً', this)">عاجل جداً</button>
+            <button type="button" class="p-btn" onclick="setPriority('عاجل', this)">عاجل</button>
+            <button type="button" class="p-btn" onclick="setPriority('متابعة', this)">متابعة</button>
+        </div>
+
+        <label>الإخلالات:</label>
+        <div class="dropdown">
+            <button type="button" class="drop-btn" onclick="toggleDropdown()">اختر الإخلالات ▼</button>
+            <div id="issueList" class="dropdown-content">
+                <label><input type="checkbox" value="عدم جاهزية القاعات"> عدم جاهزية بعض القاعات</label>
+                <label><input type="checkbox" value="نظافة القاعات والممرات"> نظافة القاعات والممرات</label>
+                <label><input type="checkbox" value="نظافة دورات المياه"> نظافة دورات المياه</label>
+                <label><input type="checkbox" value="تفتيش دورات المياه"> عدم استكمال تفتيش دورات المياه</label>
+                <label><input type="checkbox" value="تأخر تفتيش الطلبة"> تأخر إجراءات تفتيش الطلبة</label>
+                <label><input type="checkbox" value="تأخر وصول المراقبين"> تأخر وصول المراقبين</label>
+                <label><input type="checkbox" value="الهدوء والانضباط"> ملاحظات الهدوء والانضباط</label>
+                <label><input type="checkbox" value="دخول الزائرين"> دخول الزائرين للقاعات</label>
+                <label><input type="checkbox" value="سلامة العاملين"> سلامة وأمن العاملين</label>
+                <label><input type="checkbox" value="عدد اللجان"> عدم تناسب عدد اللجان</label>
+                <label><input type="checkbox" value="نقص الكوادر"> نقص في الكوادر المكلفة</label>
+                <button type="button" class="close-btn" onclick="toggleDropdown()">إغلاق القائمة ▲</button>
+            </div>
+        </div>
+
+        <label>ملاحظات المعالجة الفورية:</label>
+        <textarea id="notes" rows="3"></textarea>
+
+        <button type="button" class="submit-btn" onclick="sendData()">إرسال التقرير</button>
+    </form>
+</div>
+
+<script>
+    let selectedPriority = "";
+    function toggleDropdown() {
+        const list = document.getElementById('issueList');
+        list.style.display = (list.style.display === 'block') ? 'none' : 'block';
+    }
+    function setPriority(val, btn) {
+        selectedPriority = val;
+        document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+    async function sendData() {
+        const data = {
+            centerName: document.getElementById('centerName').value,
+            priority: selectedPriority,
+            issues: Array.from(document.querySelectorAll('#issueList input:checked')).map(cb => cb.value).join(", "),
+            notes: document.getElementById('notes').value
+        };
+        
+        if(!data.centerName || !data.priority) { alert("يرجى تعبئة اسم المركز والأولوية"); return; }
+
+        fetch('https://script.google.com/macros/s/AKfycbzFr1sL7NXGLA85YGrFk_N9luAPZ_eLksELDedvRxwqDHyJ8dN-GZrDeeXZFDhogvvmjQ/exec', {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }).then(() => {
+            alert("تم إرسال التقرير بنجاح!");
+            document.getElementById('reportForm').reset();
+        });
+    }
+</script>
+</body>
+</html>
